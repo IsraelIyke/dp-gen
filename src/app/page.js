@@ -4,6 +4,7 @@ import { Footer, Form, Hero, Nav, Timer } from "./Components";
 
 const DPGenerator = () => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [user, setUser] = useState(null);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -27,7 +28,7 @@ const DPGenerator = () => {
     const context = canvas.getContext("2d");
 
     const frameImage = new Image();
-    frameImage.src = "/frame.png"; // Load your frame image
+    frameImage.src = "/frame2.png"; // Load your frame image
     frameImage.onload = () => {
       context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
 
@@ -39,20 +40,20 @@ const DPGenerator = () => {
           980,
           1000,
           canvas.width - 1900,
-          canvas.height - 2550
+          canvas.height - 2950
         );
 
         // Add text below the image
         context.fillStyle = "black"; // Set text color
-        context.font = "20px Arial"; // Set font style
-        context.textAlign = "center";
-        context.fillText("Will Be At", canvas.width / 2, canvas.height - 20);
+        context.font = "100px Arial"; // Set font style
+        context.textAlign = "left";
+        context.fillText(user, 1400, 2200);
 
         // To make it downloadable, you can use the same code as before.
         const dpDataUrl = canvas.toDataURL("image/png");
         const a = document.createElement("a");
         a.href = dpDataUrl;
-        a.download = "profile_picture.png";
+        a.download = "devfest.png";
         a.click();
       };
     };
@@ -62,7 +63,22 @@ const DPGenerator = () => {
     <div className="container">
       <Nav />
       <Hero />
-      <Form />
+      <form>
+        <div className="form-container">
+          <h3>
+            <b>Customise your Devfest DP</b>
+          </h3>
+          <label>Name</label>
+          <input
+            className="form-name"
+            value={user}
+            name="user"
+            onChange={(e) => setUser(e.target.value)}
+          />
+          <div className="form-info">Nickname, first name, how you want it</div>
+          <label>Insert your picture</label>
+        </div>
+      </form>
       <div className="drag-main">
         <div className="drag-container">
           <div className="form-drag-drop">
