@@ -1,109 +1,99 @@
 "use client";
-import React, { useState } from "react";
-import { Footer, Form, Hero, Nav, Timer } from "./Components";
+import { useState, useRef } from "react";
+import { Footer, Hero, Nav, Timer } from "./Components";
+import "./globals.css";
 
-const DPGenerator = () => {
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [user, setUser] = useState(null);
+export default function DPGenerator() {
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const canvasRef = useRef(null);
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setSelectedImage(imageUrl);
-    }
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
-  const generateDP = () => {
-    // Implement your image processing logic here if needed.
+  const generateAndDownloadDP = async () => {
+    if (!previewUrl) return;
 
-    // To make it downloadable, you can use the same code as before.
-    // I'm using the example code for simplicity.
+    setIsGenerating(true);
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 3000;
-    canvas.height = 4000;
-    // Increase the height to accommodate the text
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
 
-    const context = canvas.getContext("2d");
+    const userImg = new Image();
+    userImg.src = previewUrl;
 
-    const frameImage = new Image();
-    frameImage.src = "/frame2.png"; // Load your frame image
-    frameImage.onload = () => {
-      context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+    const frameImg = new Image();
+    frameImg.src = "/Base.png";
 
-      const image = new Image();
-      image.src = selectedImage;
-      image.onload = () => {
-        context.drawImage(
-          image,
-          980,
-          1000,
-          canvas.width - 1900,
-          canvas.height - 2950
-        );
+    await Promise.all([
+      new Promise((res) => (userImg.onload = res)),
+      new Promise((res) => (frameImg.onload = res)),
+    ]);
 
-        // Add text below the image
-        context.fillStyle = "black"; // Set text color
-        context.font = "100px Arial"; // Set font style
-        context.textAlign = "left";
-        context.fillText(user, 1400, 2200);
+    const SIZE = 800;
+    canvas.width = SIZE;
+    canvas.height = SIZE;
 
-        // To make it downloadable, you can use the same code as before.
-        const dpDataUrl = canvas.toDataURL("image/png");
-        const a = document.createElement("a");
-        a.href = dpDataUrl;
-        a.download = "devfest.png";
-        a.click();
-      };
-    };
+    ctx.clearRect(0, 0, SIZE, SIZE);
+
+    // Draw user image
+    ctx.drawImage(userImg, 0, 0, SIZE, SIZE);
+
+    // Draw frame overlay
+    ctx.drawImage(frameImg, 0, 0, SIZE, SIZE);
+
+    const link = document.createElement("a");
+    link.download = "generated-dp.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    setIsGenerating(false);
   };
 
   return (
-    <div className="container">
+    <>
       <Nav />
       <Hero />
-      <form>
-        <div className="form-container">
-          <h3>
-            <b>Customise your Devfest DP</b>
-          </h3>
-          <label>Name</label>
+
+      <main className="dp-wrapper">
+        <section className="dp-card">
+          <h2>Create Your DP</h2>
+
           <input
-            className="form-name"
-            value={user}
-            name="user"
-            onChange={(e) => setUser(e.target.value)}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
           />
-          <div className="form-info">Nickname, first name, how you want it</div>
-          <label>Insert your picture</label>
-        </div>
-      </form>
-      <div className="drag-main">
-        <div className="drag-container">
-          <div className="form-drag-drop">
-            <p>Drag and drop to upload or</p>
-            <input type="file" accept="image/*" onChange={handleImageChange} />
-            {selectedImage && (
-              <img
-                src={selectedImage}
-                alt="Selected Image"
-                className="previewImage"
-              />
-            )}
-          </div>
-        </div>
-      </div>
 
-      <div className="form-info">Preferrably in a square resolution</div>
+          {previewUrl && (
+            <div className="preview">
+              <img src={previewUrl} alt="Preview" />
+            </div>
+          )}
 
-      <button className="form-button" onClick={generateDP}>
-        Generate and Download DP
-      </button>
+          <button
+            disabled={!imageFile || isGenerating}
+            onClick={generateAndDownloadDP}
+          >
+            {isGenerating ? "Generating..." : "Generate & Download"}
+          </button>
+
+          <p className="hint">
+            Use a square image for best results.
+          </p>
+        </section>
+
+        <canvas ref={canvasRef} hidden />
+      </main>
+
       <Timer />
       <Footer />
-    </div>
+    </>
   );
-};
-
-export default DPGenerator;
+}
